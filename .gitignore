@@ -1,0 +1,12 @@
+listing
+output
+*.bat
+*.html
+DebugConfig
+EventRecorderStub.scvd
+JLinkLog.txt
+JLinkSettings.ini
+Objects
+STM32F4.uvguix.admin
+STM32F4.uvguix.lpr
+STM32F4.uvoptx
