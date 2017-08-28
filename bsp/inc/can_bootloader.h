@@ -29,9 +29,14 @@
 #define APP_EXE_FLAG_ADDR          ((uint32_t)0x08007800)
 #define APP_START_ADDR             ((uint32_t)0x08008000)
 #define APP_EXE_FLAG_START_ADDR    ((uint32_t)0x08004000)
-#define CAN_BL_BOOT     0x55555555
-#define CAN_BL_APP      0xAAAAAAAA
-#define FW_TYPE         CAN_BL_BOOT
+#define CAN_BL_APP      0xAAAAAA
+#define CAN_BL_BOOT     0x555555 
+#define DEVICE_ADDR     0x132 //设备地址
+//----------------------以下宏定义是对芯片型号进行宏定义----------------------------
+#define TMS320F28335      1
+#define TMS320F2808       2
+#define STM32F407IGT6     3
+//---------------------------------------------------
 
 typedef struct
 {
@@ -62,7 +67,30 @@ typedef struct
 	unsigned char DLC;   
 	u8 data[8];
 }bootloader_data;
-
+//-------------------------------------------------------------------------------
+typedef struct _Device_INFO
+{
+	union
+	{
+		unsigned short int all;
+		struct
+		{
+			unsigned short int Device_addr:	12;
+			unsigned short int reserve:	4;
+		}bits;//设备地址
+	}Device_addr;
+	union
+	{
+		unsigned long int all;
+		struct
+		{
+			unsigned long int FW_TYPE:24;//固件类型
+			unsigned long int Chip_Value:8;//控制器芯片类型
+		}bits;
+	}FW_TYPE;
+	unsigned long int FW_Version;//固件版本
+}Device_INFO;
+extern Device_INFO DEVICE_INFO;
 uint32_t GetSector(uint32_t Address);
 FLASH_Status CAN_BOOT_ErasePage(uint32_t StartPageAddr,uint32_t EndPageAddr);
 uint16_t CAN_BOOT_GetAddrData(void);

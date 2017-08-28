@@ -11,6 +11,10 @@ CBL_CMD_LIST CMD_List =
   .CmdSuccess    = 0x08,      //命令执行成功
   .CmdFaild      = 0x09,      //命令执行失败
 };
+Device_INFO DEVICE_INFO =
+{
+.FW_Version = 0x0010000,
+};
 typedef  void (*pFunction)(void);
 #define Buffer_size 80
 uint8_t	data_temp[128];
@@ -187,10 +191,14 @@ void CAN_BOOT_ExecutiveCommand(CanRxMsg *pRxMessage)
 {
 	u8 i;
 	CanTxMsg TxMessage;
+	DEVICE_INFO.FW_TYPE.bits.FW_TYPE = CAN_BL_BOOT;
+	DEVICE_INFO.FW_TYPE.bits.Chip_Value = STM32F407IGT6;
+	DEVICE_INFO.Device_addr.all = (u16)0x00;
+	DEVICE_INFO.Device_addr.bits.Device_addr = DEVICE_ADDR;
 	FLASH_Status ret;
 	bootloader_data Boot_ID_info;
 	//判断接收的数据地址是否和本节点地址匹配，若不匹配则直接返回，不做任何事情
-	if((can_addr!=CAN_BOOT_GetAddrData())&&(can_addr!=0))
+	if((can_addr!=DEVICE_ADDR)&&(can_addr!=0))
 	{
 		return;
 	}
@@ -336,29 +344,30 @@ void CAN_BOOT_ExecutiveCommand(CanRxMsg *pRxMessage)
 	//CMD_List.Check，节点在线检测
 	//节点收到该命令后返回固件版本信息和固件类型，
 	//该命令在Bootloader程序和APP程序都必须实现 
-	
 	if(can_cmd == CMD_List.Check)//DSP中尚未实现,相对比较容易实现,主要是为实现APP再次更新应用程序
 	{
 		if(can_addr != 0x00)
 		{
-			TxMessage.ExtId = (CAN_BOOT_GetAddrData()<<CMD_WIDTH)|CMD_List.CmdSuccess;
-			TxMessage.Data[0] = 0;//主版本号，两字节
-			TxMessage.Data[1] = 1;
-			TxMessage.Data[2] = 0;//次版本号，两字节
-			TxMessage.Data[3] = 0;
-			TxMessage.Data[4] = (uint8_t)(FW_TYPE>>24);
-			TxMessage.Data[5] = (uint8_t)(FW_TYPE>>16);
-			TxMessage.Data[6] = (uint8_t)(FW_TYPE>>8);
-			TxMessage.Data[7] = (uint8_t)(FW_TYPE>>0);
-			TxMessage.DLC = 8;
+			TxMessage.ExtId = (DEVICE_INFO.Device_addr.bits.Device_addr<<CMD_WIDTH)|CMD_List.CmdSuccess;
+			TxMessage.DLC = 8; 
+			TxMessage.Data[0] = (u8)(DEVICE_INFO.FW_Version>>24);;//主版本号，两字节
+			TxMessage.Data[1] = (u8)(DEVICE_INFO.FW_Version>>16);
+			TxMessage.Data[2] = (u8)(DEVICE_INFO.FW_Version>>8);//次版本号，两字节
+			TxMessage.Data[3] = (u8)(DEVICE_INFO.FW_Version>>0);
+			TxMessage.Data[4] = (u8)(DEVICE_INFO.FW_TYPE.bits.FW_TYPE>>16);
+			TxMessage.Data[5] = (u8)(DEVICE_INFO.FW_TYPE.bits.FW_TYPE>>8);
+			TxMessage.Data[6] = (u8)(DEVICE_INFO.FW_TYPE.bits.FW_TYPE>>0);
+			TxMessage.Data[7] = (u8)(DEVICE_INFO.FW_TYPE.bits.Chip_Value>>0); 
 			CAN_WriteData(&TxMessage);
 		}
 	}
 	//CMD_List.Excute，控制程序跳转到指定地址执行
 	//该命令在Bootloader和APP程序中都必须实现
 	if(can_cmd == CMD_List.Excute)//该命令在DSP中已经实现
-	{ 
-		exe_type = (pRxMessage->Data[0]<<24)|(pRxMessage->Data[1]<<16)|(pRxMessage->Data[2]<<8)|(pRxMessage->Data[3]<<0);
+	{  
+    exe_type = (pRxMessage->Data[0]<<0x10)|\
+			   (pRxMessage->Data[1]<<0x08)|\
+			   (pRxMessage->Data[2]<<0x00); 
 		if(exe_type == CAN_BL_APP)
 		{
 			if((*((uint32_t *)APP_START_ADDR)!=0xFFFFFFFF))

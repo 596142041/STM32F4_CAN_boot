@@ -25,23 +25,27 @@
 #define CAN_Rx_Port_CLK  RCC_AHB1Periph_GPIOI
 /* Private typedef -----------------------------------------------------------*/
 typedef  struct {
-  unsigned char   SJW;
-  unsigned char   BS1;
-  unsigned char   BS2;
-  unsigned short  PreScale;
-} tCAN_BaudRate;
+  unsigned char   CAN_SJW;
+  unsigned char   CAN_BS1;
+  unsigned char   CAN_BS2;
+  unsigned short int  CAN_Prescaler;
+  unsigned long  int  BaudRate;
+ 
+} CAN_BaudRate;
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 CanRxMsg CAN1_RxMessage;
 volatile uint8_t CAN1_CanRxMsgFlag=0;//接收到CAN数据后的标志
-
-tCAN_BaudRate  CAN_BaudRateInitTab[]= {      // CLK=84MHz
-   {CAN_SJW_1tq,CAN_BS1_2tq,CAN_BS2_1tq,21},     // 1M
-   {CAN_SJW_1tq,CAN_BS1_6tq,CAN_BS2_1tq,21},     // 500K
-   {CAN_SJW_1tq,CAN_BS1_4tq,CAN_BS2_1tq,70},    // 200K
-   {CAN_SJW_1tq,CAN_BS1_6tq,CAN_BS2_1tq,105},    // 100K
-   {CAN_SJW_1tq,CAN_BS1_6tq,CAN_BS2_1tq,210},    // 50K
-   {CAN_SJW_1tq,CAN_BS1_6tq,CAN_BS2_1tq,525},   // 20K
+CAN_BaudRate  CAN_BaudRateInitTab[27]=  // CLK=42MHz
+{     
+   {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x02, 1000000},     // 1M
+   {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x04, 500000},     // 500K
+   {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x05, 400000},     // 400K
+   {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x08, 250000},    // 250K
+   {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x0A, 200000},    // 200K
+   {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x10, 125000},     // 500K
+   {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x14, 100000},    // 100K
+   {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x28, 50000},    // 50K 
 };
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
@@ -54,15 +58,16 @@ tCAN_BaudRate  CAN_BaudRateInitTab[]= {      // CLK=84MHz
   */
 uint32_t CAN_GetBaudRateNum(uint32_t BaudRate)
 {
-  switch(BaudRate){
-    case 1000000 :return 0;
-    case 500000 :return 1;
-    case 200000 :return 2;
-    case 100000 :return 3;
-    case 50000 :return 4;
-    case 20000 :return 5;
-    default:return 0;
-  }
+	int i;
+	for(i = 0;i<27;i++)
+	{
+		if(CAN_BaudRateInitTab[i].BaudRate == BaudRate)
+		{
+			return i;
+		}
+		
+	}
+	return 0;
 }
 
 
@@ -150,10 +155,10 @@ void CAN_Configuration(uint32_t BaudRate)
 	CAN_InitStructure.CAN_RFLM = DISABLE;
 	CAN_InitStructure.CAN_TXFP = ENABLE;
 	CAN_InitStructure.CAN_Mode = CAN_Mode_Normal;
-	CAN_InitStructure.CAN_BS1 = CAN_BS1_12tq;
-	CAN_InitStructure.CAN_BS2 = CAN_BS2_8tq;
-	CAN_InitStructure.CAN_SJW = CAN_SJW_1tq;
-	CAN_InitStructure.CAN_Prescaler = 4;
+	CAN_InitStructure.CAN_BS1 = CAN_BaudRateInitTab[CAN_GetBaudRateNum(BaudRate)].CAN_BS1;
+	CAN_InitStructure.CAN_BS2 = CAN_BaudRateInitTab[CAN_GetBaudRateNum(BaudRate)].CAN_BS2;
+	CAN_InitStructure.CAN_SJW = CAN_BaudRateInitTab[CAN_GetBaudRateNum(BaudRate)].CAN_SJW;
+	CAN_InitStructure.CAN_Prescaler = CAN_BaudRateInitTab[CAN_GetBaudRateNum(BaudRate)].CAN_Prescaler;
 	CAN_Init(CAN1,&CAN_InitStructure);
 	//设置CAN接收过滤器
 	CAN_ConfigFilter(0,0x00);//广播地址，接受广播命令
