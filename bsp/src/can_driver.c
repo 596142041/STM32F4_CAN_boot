@@ -1,41 +1,6 @@
-/**
-  ******************************************************************************
-  * @file    can_driver.c
-  * $Author: wdluo $
-  * $Revision: 17 $
-  * $Date:: 2012-07-06 11:16:48 +0800 #$
-  * @brief   CAN×ÜÏßÊÕ·¢Ïà¹Øº¯Êı.
-  ******************************************************************************
-  * @attention
-  *
-  *<h3><center>&copy; Copyright 2009-2012, ViewTool</center>
-  *<center><a href="http:\\www.viewtool.com">http://www.viewtool.com</a></center>
-  *<center>All Rights Reserved</center></h3>
-  * 
-  ******************************************************************************
-  */
-/* Includes ------------------------------------------------------------------*/
-#include "main.h"
-#include "can_bootloader.h"
-#define CAN_Tx_Port      GPIOH
-#define CAN_Tx_Pin       GPIO_Pin_13
-#define CAN_Tx_Port_CLK  RCC_AHB1Periph_GPIOH 
-#define CAN_Rx_Port      GPIOI
-#define CAN_Rx_Pin       GPIO_Pin_9
-#define CAN_Rx_Port_CLK  RCC_AHB1Periph_GPIOI
-/* Private typedef -----------------------------------------------------------*/
-typedef  struct {
-  unsigned char   CAN_SJW;
-  unsigned char   CAN_BS1;
-  unsigned char   CAN_BS2;
-  unsigned short int  CAN_Prescaler;
-  unsigned long  int  BaudRate;
- 
-} CAN_BaudRate;
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
+#include "can_driver.h"
 CanRxMsg CAN1_RxMessage;
-volatile uint8_t CAN1_CanRxMsgFlag=0;//½ÓÊÕµ½CANÊı¾İºóµÄ±êÖ¾
+volatile uint8_t CAN1_CanRxMsgFlag=0;//æ¥æ”¶åˆ°CANæ•°æ®åçš„æ ‡å¿—
 CAN_BaudRate  CAN_BaudRateInitTab[27]=  // CLK=42MHz
 {     
    {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x02, 1000000},     // 1M
@@ -47,14 +12,11 @@ CAN_BaudRate  CAN_BaudRateInitTab[27]=  // CLK=42MHz
    {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x14, 100000},    // 100K
    {CAN_SJW_1tq,CAN_BS1_12tq,CAN_BS1_8tq,0x28, 50000},    // 50K 
 };
-/* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
 
 /**
-  * @brief  Í¨¹ı²¨ÌØÂÊµÄÖµ»ñÈ¡²¨ÌØÂÊ²ÎÊı±íË÷ÒıÖµ
-  * @param  BaudRate CAN×ÜÏß²¨ÌØÂÊ£¬µ¥Î»Îªbps
-  * @retval ²¨ÌØÂÊ²ÎÊı±íË÷ÒıÖµ
+  * @brief  é€šè¿‡æ³¢ç‰¹ç‡çš„å€¼è·å–æ³¢ç‰¹ç‡å‚æ•°è¡¨ç´¢å¼•å€¼
+  * @param  BaudRate CANæ€»çº¿æ³¢ç‰¹ç‡ï¼Œå•ä½ä¸ºbps
+  * @retval æ³¢ç‰¹ç‡å‚æ•°è¡¨ç´¢å¼•å€¼
   */
 uint32_t CAN_GetBaudRateNum(uint32_t BaudRate)
 {
@@ -64,8 +26,7 @@ uint32_t CAN_GetBaudRateNum(uint32_t BaudRate)
 		if(CAN_BaudRateInitTab[i].BaudRate == BaudRate)
 		{
 			return i;
-		}
-		
+		} 
 	}
 	return 0;
 }
@@ -73,7 +34,7 @@ uint32_t CAN_GetBaudRateNum(uint32_t BaudRate)
 
 
 /**
-  * @brief  CANÒı½ÅÅäÖÃ
+  * @brief  CANå¼•è„šé…ç½®
   * @param  None
   * @retval None
   */
@@ -93,7 +54,7 @@ void CAN_GPIO_Configuration(void)
 	GPIO_Init(CAN_Rx_Port,&GPIO_init);
 }
 /**
-  * @brief  CAN½ÓÊÕÖĞ¶ÏÅäÖÃ
+  * @brief  CANæ¥æ”¶ä¸­æ–­é…ç½®
   * @param  None
   * @retval None
   */
@@ -101,7 +62,6 @@ void CAN_NVIC_Configuration(void)
 {
   NVIC_InitTypeDef NVIC_InitStructure;
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
-
   // Enable CAN1 RX0 interrupt IRQ channel
   NVIC_InitStructure.NVIC_IRQChannel = CAN1_RX0_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
@@ -110,31 +70,31 @@ void CAN_NVIC_Configuration(void)
   NVIC_Init(&NVIC_InitStructure);
 }
 /**
-  * @brief  ÅäÖÃCAN½ÓÊÕ¹ıÂËÆ÷
-  * @param  FilterNumber ¹ıÂËÆ÷ºÅ
-  * @param  can_addr CAN½ÚµãµØÖ·£¬¸Ã²ÎÊı·Ç³£ÖØÒª£¬Í¬Ò»¸öCAN×ÜÏßÍøÂçÆä½ÚµãµØÖ·²»ÄÜÖØ¸´
+  * @brief  é…ç½®CANæ¥æ”¶è¿‡æ»¤å™¨
+  * @param  FilterNumber è¿‡æ»¤å™¨å·
+  * @param  can_addr CANèŠ‚ç‚¹åœ°å€ï¼Œè¯¥å‚æ•°éå¸¸é‡è¦ï¼ŒåŒä¸€ä¸ªCANæ€»çº¿ç½‘ç»œå…¶èŠ‚ç‚¹åœ°å€ä¸èƒ½é‡å¤
   * @retval None
   */
 void CAN_ConfigFilter(uint8_t FilterNumber,uint16_t can_addr)
 {
 	CAN_FilterInitTypeDef  CAN_FilterInitStructure;
 	u32 addr_temp;
-	addr_temp = can_addr<<CMD_WIDTH;//½«ÊäÈëµÄIDÓÒÒÆËÄÎ»£¬ÕâÑù»¹Ô­µÄ×î×îÖÕµÄIDÎ»Êı
-	//ÉèÖÃCAN½ÓÊÕ¹ıÂËÆ÷
-	CAN_FilterInitStructure.CAN_FilterNumber=FilterNumber;//¹ıÂËÆ÷1
-	CAN_FilterInitStructure.CAN_FilterMode=CAN_FilterMode_IdMask;//ÆÁ±ÎÎ»Ä£Ê½
-	CAN_FilterInitStructure.CAN_FilterScale=CAN_FilterScale_32bit;//32bitÄ£Ê½
+	addr_temp = can_addr<<CMD_WIDTH;//å°†è¾“å…¥çš„IDå³ç§»å››ä½ï¼Œè¿™æ ·è¿˜åŸçš„æœ€æœ€ç»ˆçš„IDä½æ•°
+	//è®¾ç½®CANæ¥æ”¶è¿‡æ»¤å™¨
+	CAN_FilterInitStructure.CAN_FilterNumber=FilterNumber;//è¿‡æ»¤å™¨1
+	CAN_FilterInitStructure.CAN_FilterMode=CAN_FilterMode_IdMask;//å±è”½ä½æ¨¡å¼
+	CAN_FilterInitStructure.CAN_FilterScale=CAN_FilterScale_32bit;//32bitæ¨¡å¼
 	CAN_FilterInitStructure.CAN_FilterIdHigh=addr_temp>>13;
 	CAN_FilterInitStructure.CAN_FilterIdLow=((addr_temp<<3)&0xFFFF)|0x04;
 	CAN_FilterInitStructure.CAN_FilterMaskIdHigh=ADDR_MASK>>(13);
 	CAN_FilterInitStructure.CAN_FilterMaskIdLow=((ADDR_MASK<<3)&0xFF87)|0x04;
 	CAN_FilterInitStructure.CAN_FilterFIFOAssignment=0;
-	CAN_FilterInitStructure.CAN_FilterActivation=ENABLE;//Ê¹ÄÜ¹ıÂËÆ÷
+	CAN_FilterInitStructure.CAN_FilterActivation=ENABLE;//ä½¿èƒ½è¿‡æ»¤å™¨
 	CAN_FilterInit(&CAN_FilterInitStructure);	
 }
 /**
-  * @brief  ³õÊ¼»¯CAN
-  * @param  BaudRate CAN×ÜÏß²¨ÌØÂÊ
+  * @brief  åˆå§‹åŒ–CAN
+  * @param  BaudRate CANæ€»çº¿æ³¢ç‰¹ç‡
   * @retval None
   */
 void CAN_Configuration(uint32_t BaudRate)
@@ -160,18 +120,19 @@ void CAN_Configuration(uint32_t BaudRate)
 	CAN_InitStructure.CAN_SJW = CAN_BaudRateInitTab[CAN_GetBaudRateNum(BaudRate)].CAN_SJW;
 	CAN_InitStructure.CAN_Prescaler = CAN_BaudRateInitTab[CAN_GetBaudRateNum(BaudRate)].CAN_Prescaler;
 	CAN_Init(CAN1,&CAN_InitStructure);
-	//ÉèÖÃCAN½ÓÊÕ¹ıÂËÆ÷
-	CAN_ConfigFilter(0,0x00);//¹ã²¥µØÖ·£¬½ÓÊÜ¹ã²¥ÃüÁî
-	CAN_ConfigFilter(1,CAN_BOOT_GetAddrData());//±¾½ÚµãÕæÊµµØÖ·
-	//Ê¹ÄÜ½ÓÊÕÖĞ¶Ï
+	//è®¾ç½®CANæ¥æ”¶è¿‡æ»¤å™¨
+	CAN_ConfigFilter(0,0x00);//å¹¿æ’­åœ°å€ï¼Œæ¥å—å¹¿æ’­å‘½ä»¤
+	CAN_ConfigFilter(1,DEVICE_INFO.Device_addr.bits.Device_addr);//æœ¬èŠ‚ç‚¹çœŸå®åœ°å€
+	
+	//ä½¿èƒ½æ¥æ”¶ä¸­æ–­
 	CAN_ITConfig(CAN1,CAN_IT_FMP0, ENABLE);
 }
 
 
 /**
-  * @brief  ·¢ËÍÒ»Ö¡CANÊı¾İ
-  * @param  CANx CANÍ¨µÀºÅ
-	* @param  TxMessage CANÏûÏ¢Ö¸Õë
+  * @brief  å‘é€ä¸€å¸§CANæ•°æ®
+  * @param  CANx CANé€šé“å·
+	* @param  TxMessage CANæ¶ˆæ¯æŒ‡é’ˆ
   * @retval None
   */
 uint8_t CAN_WriteData(CanTxMsg *TxMessage)
@@ -190,7 +151,7 @@ uint8_t CAN_WriteData(CanTxMsg *TxMessage)
   return 0;
 }
 /**
-  * @brief  CAN½ÓÊÕÖĞ¶Ï´¦Àíº¯Êı
+  * @brief  CANæ¥æ”¶ä¸­æ–­å¤„ç†å‡½æ•°
   * @param  None
   * @retval None
   */
@@ -201,24 +162,6 @@ void CAN1_RX0_IRQHandler(void)
 	CAN1_CanRxMsgFlag = 1;
 }
 
-/**
-  * @brief  »ñÈ¡CAN½ÚµãµØÖ·£¬¸Ãº¯Êı¸ù¾İ×Ô¼ºµÄÊµ¼ÊÇé¿ö½øĞĞĞŞ¸Ä
-  * @param  None
-  * @retval None
-  */
-uint16_t Read_CAN_Address(void)
-{
-	return 0x132;//·µ»ØµÄµØÖ·ÖµĞèÒª¸ù¾İÊµ¼ÊÇé¿ö½øĞĞĞŞ¸Ä
-}
-
-/**
-  * @brief  ³õÊ¼»¯ÅäÖÃ»ñÈ¡CAN×ÜÏßµØÖ·µÄGPIOÒı½Å
-  * @param  None
-  * @retval None
-  */
-void CAN_Address_GPIO_Config(void)
-{
-  //¸ù¾İ×Ô¼ºµÄ°å×ÓÍê³É¶ÔÓ¦µÄ³ÌĞò
-}
+ 
 
 /*********************************END OF FILE**********************************/
