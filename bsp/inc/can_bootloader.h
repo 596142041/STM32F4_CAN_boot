@@ -1,57 +1,55 @@
-/**
-  ******************************************************************************
-  * @file    can_bootloader.h
-  * $Author: wdluo $
-  * $Revision: 17 $
-  * $Date:: 2012-07-06 11:16:48 +0800 #$
-  * @brief   »ùÓÚCAN×ÜÏßµÄBootloader³ÌĞò.
-  ******************************************************************************
-  * @attention
-  *
-  *<h3><center>&copy; Copyright 2009-2012, ViewTool</center>
-  *<center><a href="http:\\www.viewtool.com">http://www.viewtool.com</a></center>
-  *<center>All Rights Reserved</center></h3>
-  * 
-  ******************************************************************************
-  */
-/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __CAN_BOOTLOADER_H
 #define __CAN_BOOTLOADER_H
 /* Includes ------------------------------------------------------------------*/
 #include "user_config.h"
 #include "delay.h"
 #include "can_driver.h"
+#include "flash.h"
 /* Private typedef -----------------------------------------------------------*/
-#define CMD_WIDTH   4         //²»ÒªĞŞ¸Ä
-#define CMD_MASK    0xF       //²»ÒªĞŞ¸Ä
-#define CAN_ID_TYPE 1         //1ÎªÀ©Õ¹Ö¡£¬0Îª±ê×¼Ö¡£¬²»ÒªĞŞ¸Ä
-#define ADDR_MASK   0x1FFFFFF //²»ÒªĞŞ¸Ä
+#define CMD_WIDTH   4         //ä¸è¦ä¿®æ”¹
+#define CMD_MASK    0xF       //ä¸è¦ä¿®æ”¹ 
+#define ADDR_MASK   0x1FFFFFF //ä¸è¦ä¿®æ”¹
 #define APP_EXE_FLAG_ADDR          ((uint32_t)0x08007800)
 #define APP_START_ADDR             ((uint32_t)0x08008000)
+#define APP_Write_START_ADDR       ((uint32_t)0x08008000)
+#define APP_Write_END_ADDR         ((uint32_t)0x080FFFFF)
 #define APP_EXE_FLAG_START_ADDR    ((uint32_t)0x08004000)
 #define CAN_BL_APP      0xAAAAAA
 #define CAN_BL_BOOT     0x555555 
-#define DEVICE_ADDR     0x132 //Éè±¸µØÖ·
-//----------------------ÒÔÏÂºê¶¨ÒåÊÇ¶ÔĞ¾Æ¬ĞÍºÅ½øĞĞºê¶¨Òå----------------------------
-#define TMS320F28335      1
-#define TMS320F2808       2
+#define DEVICE_ADDR     0x132 //è®¾å¤‡åœ°å€
+//æ•…éšœä¿¡æ¯è¡¨
+#define DEVICE_ADDR_ERROR  0xA0
+#define ERASE_ERROR        0xA1
+#define WRITE_ERROR        0xA2
+#define READ_LEN_ERROR     0xA3
+#define MSG_DATA_LEN_ERROR 0xA4
+#define FILE_TYPE_ERROR    0xA5
+#define CRC_ERROR          0xA6
+#define FLASH_ADDR_ERROR   0xA7
+#define WRITE_LEN_ERROR    0xA8
+//----------------------ä»¥ä¸‹å®å®šä¹‰æ˜¯å¯¹èŠ¯ç‰‡å‹å·è¿›è¡Œå®å®šä¹‰---------------------------- 
 #define STM32F407IGT6     3
 //---------------------------------------------------
-
-typedef struct
+#define File_None 0xF0
+#define File_bin  0xF1
+#define File_hex  0xF2
+//---------------------------------------------------
+typedef  void (*pFunction)(void); 
+typedef struct _CBL_CMD_LIST
 {
-  //BootloaderÏà¹ØÃüÁî
-  unsigned char Erase;        //²Á³öAPP´¢´æÉÈÇøÊı¾İ
-  unsigned char WriteInfo;    //ÉèÖÃ¶à×Ö½ÚĞ´Êı¾İÏà¹Ø²ÎÊı£¨Ğ´ÆğÊ¼µØÖ·£¬Êı¾İÁ¿£©
-  unsigned char Write;        //ÒÔ¶à×Ö½ÚĞÎÊ½Ğ´Êı¾İ
-  unsigned char Check;        //¼ì²â½ÚµãÊÇ·ñÔÚÏß£¬Í¬Ê±·µ»Ø¹Ì¼şĞÅÏ¢
-  unsigned char SetBaudRate;  //ÉèÖÃ½Úµã²¨ÌØÂÊ
-  unsigned char Excute;       //Ö´ĞĞ¹Ì¼ş
-  //½Úµã·µ»Ø×´Ì¬
-  unsigned char CmdSuccess;   //ÃüÁîÖ´ĞĞ³É¹¦
-  unsigned char CmdFaild;     //ÃüÁîÖ´ĞĞÊ§°Ü
+	//Bootloaderç›¸å…³å‘½ä»¤
+	unsigned char Read;         //è¯»å–flashæ•°æ®
+	unsigned char Erase;        //æ“¦å‡ºAPPå‚¨å­˜æ‰‡åŒºæ•°æ®
+	unsigned char Write;        //ä»¥å¤šå­—èŠ‚å½¢å¼å†™æ•°æ®
+	unsigned char Check;        //æ£€æµ‹èŠ‚ç‚¹æ˜¯å¦åœ¨çº¿ï¼ŒåŒæ—¶è¿”å›å›ºä»¶ä¿¡æ¯
+	unsigned char Excute;       //æ‰§è¡Œå›ºä»¶
+	unsigned char WriteInfo;    //è®¾ç½®å¤šå­—èŠ‚å†™æ•°æ®ç›¸å…³å‚æ•°ï¼ˆå†™èµ·å§‹åœ°å€ï¼Œæ•°æ®é‡ï¼‰
+	unsigned char SetBaudRate;  //è®¾ç½®èŠ‚ç‚¹æ³¢ç‰¹ç‡
+	//èŠ‚ç‚¹è¿”å›çŠ¶æ€,å…³é”®
+	unsigned char CmdFaild;     //å‘½ä»¤æ‰§è¡Œå¤±è´¥
+	unsigned char CmdSuccess;   //å‘½ä»¤æ‰§è¡ŒæˆåŠŸ
 }CBL_CMD_LIST; 
-typedef struct
+typedef struct _bootloader_data
 {
 	union
 	{
@@ -77,18 +75,28 @@ typedef struct _Device_INFO
 		{
 			unsigned short int Device_addr:	12;
 			unsigned short int reserve:	4;
-		}bits;//Éè±¸µØÖ·
+		}bits;//è®¾å¤‡åœ°å€
 	}Device_addr;
 	union
 	{
 		unsigned long int all;
 		struct
 		{
-			unsigned long int FW_TYPE:24;//¹Ì¼şÀàĞÍ
-			unsigned long int Chip_Value:8;//¿ØÖÆÆ÷Ğ¾Æ¬ÀàĞÍ
+			unsigned long int FW_TYPE:24;//å›ºä»¶ç±»å‹
+			unsigned long int Chip_Value:8;//æ§åˆ¶å™¨èŠ¯ç‰‡ç±»å‹
 		}bits;
 	}FW_TYPE;
-	unsigned long int FW_Version;//¹Ì¼ş°æ±¾
+		union
+	{
+		unsigned long  int all;
+		struct
+		{
+			unsigned long  int Version:	7;//å›ºä»¶ç‰ˆæœ¬
+			unsigned long  int date:	5;//æ—¥æœŸ
+			unsigned long  int month:	4;//æœˆ
+			unsigned long  int year:	16;//å¹´
+		}bits;
+	}FW_Version;//å›ºä»¶ç‰ˆæœ¬ 
 }Device_INFO;
 extern Device_INFO DEVICE_INFO;
 uint32_t GetSector(uint32_t Address);
