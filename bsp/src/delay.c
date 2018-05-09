@@ -2,26 +2,26 @@
 static u8  fac_us=0;
 static u16 fac_ms=0;
 /********************************************
-*º¯ÊıÃû:void delay_init(u8 SYSCLK)
-*ÊäÈë²ÎÊı:u8 SYSCLK ÏµÍ³Ê±ÖÓÆµÂÊ
-*·µ»ØÖµ:ÎŞ;
-*±¸×¢:systick ¶¨Ê±Æ÷µÄÊ±ÖÓÊÇÏµÍ³Ê±ÖÓµÄ8·ÖÆµ,
-* Òò´Ë×î´óµÄ¼ÆÊıÊ±¼äÎª780ms
+*å‡½æ•°å:void delay_init(u8 SYSCLK)
+*è¾“å…¥å‚æ•°:u8 SYSCLK ç³»ç»Ÿæ—¶é’Ÿé¢‘ç‡
+*è¿”å›å€¼:æ— ;
+*å¤‡æ³¨:systick å®šæ—¶å™¨çš„æ—¶é’Ÿæ˜¯ç³»ç»Ÿæ—¶é’Ÿçš„8åˆ†é¢‘,
+* å› æ­¤æœ€å¤§çš„è®¡æ•°æ—¶é—´ä¸º780ms
 *********************************************/
 void delay_init(u8 SYSCLK)
 {
 	Sys_Tick->STK_CTRL.bit.CLKSOURCE = 0;
 	Sys_Tick->STK_CTRL.bit.TICK_INT = 0;
 	Sys_Tick->STK_CTRL.bit.ENABLE = 0;
-	Sys_Tick->STK_VAL.bit.CURRENT = 0;//Ê±ÖÓÎª21MHz
+	Sys_Tick->STK_VAL.bit.CURRENT = 0;//æ—¶é’Ÿä¸º21MHz
 	fac_us = SYSCLK>>3;
 	fac_ms = fac_us*1000;
 	
 }
 /*************************************************
-*º¯ÊıÃû:void delay_ms(u16 nms)
-*ÊäÈë²ÎÊı:u16 nms ÑÓÊ±Ê±¼ä(²»ÄÜ´óÓÚ780)
-*·µ»ØÖµ:ÎŞ; 
+*å‡½æ•°å:void delay_ms(u16 nms)
+*è¾“å…¥å‚æ•°:u16 nms å»¶æ—¶æ—¶é—´(ä¸èƒ½å¤§äº780)
+*è¿”å›å€¼:æ— ; 
 **************************************************/
 void delay_ms(u16 nms)
 {
