@@ -2,25 +2,25 @@
 #include "can_bootloader.h"
 extern CanRxMsg CAN1_RxMessage;
 extern uint8_t	data_temp[128];
-extern volatile uint8_t CAN1_CanRxMsgFlag;//½ÓÊÕµ½CANÊı¾İºóµÄ±êÖ¾
+extern volatile uint8_t CAN1_CanRxMsgFlag;//æ¥æ”¶åˆ°CANæ•°æ®åçš„æ ‡å¿—
 int main(void)
 {
 	if(*((uint32_t *)APP_EXE_FLAG_ADDR)==0x78563412)
 	{
-		CAN_BOOT_JumpToApplication(APP_START_ADDR);
+	CAN_BOOT_JumpToApplication(APP_START_ADDR);
 	}
 	delay_init(168);
 	delay_ms(100);
-	__set_PRIMASK(0);//¿ªÆô×ÜÖĞ¶Ï
-	CAN_Configuration(500000); 
-  while (1)
-  {
+	__set_PRIMASK(0);//å¼€å¯æ€»ä¸­æ–­
+	CAN_Configuration(250000); 
+	while (1)
+	{
 		if(CAN1_CanRxMsgFlag)
 		{
 			CAN_BOOT_ExecutiveCommand(&CAN1_RxMessage);
 			CAN1_CanRxMsgFlag = 0;
 		}
-  }
+	}
 } 
 /****************************************************************************************************
 After Build - User command #1: fromelf.exe --bin -o ..\output\BootLoader.bin ..\output\BootLoader.axf
